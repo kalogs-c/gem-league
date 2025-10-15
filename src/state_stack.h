@@ -2,7 +2,7 @@
 
 #include "state.h"
 
-void StateStack_Push(State* state);
+void StateStack_Push(State* state, void* context);
 
 void StateStack_Pop(void);
 

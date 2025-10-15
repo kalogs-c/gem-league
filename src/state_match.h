@@ -2,4 +2,4 @@
 
 #include "state.h"
 
-extern State MainMenuState;
+extern State MatchState;

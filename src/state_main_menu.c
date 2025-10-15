@@ -1,8 +1,10 @@
 #include <raylib.h>
+#include <stddef.h>
 
 #include "state.h"
-
 #include "input_handler.h"
+#include "state_match.h"
+#include "state_stack.h"
 
 typedef enum {
     MENU_PLAY,
@@ -24,7 +26,7 @@ static Color selected_item_color = YELLOW;
 static int font_size = 40;
 static int spacing = 40;
 
-void main_menu_enter(void) {
+void main_menu_enter(void* _) {
     selected_item = MENU_PLAY;
 };
 
@@ -40,6 +42,22 @@ void main_menu_update(const float _) {
         selected_item++;
         if (selected_item >= MENU_COUNT) {
             selected_item = MENU_PLAY;
+        }
+    }
+
+    if (Input_Pressed(ACTION_SELECT)) {
+        switch (selected_item) {
+            case MENU_PLAY:
+                StateStack_Pop();
+                StateStack_Push(&MatchState, NULL);
+                break;
+            case MENU_SETTINGS:
+                break;
+            case MENU_EXIT:
+                CloseWindow();
+                break;
+            default:
+                break;
         }
     }
 };
@@ -66,13 +84,9 @@ void main_menu_exit(void) {
     selected_item = MENU_PLAY;
 };
 
-State main_menu = {
+State MainMenuState = {
     .enter = main_menu_enter,
     .update = main_menu_update,
     .render = main_menu_render,
     .exit = main_menu_exit,
 };
-
-State* MainMenuState() {
-    return &main_menu;
-}

@@ -13,10 +13,11 @@ struct {
     .top = -1,
 };
 
-void StateStack_Push(State* state) {
+void StateStack_Push(State* state, void* context) {
     assert(StateStack.top < STACK_SIZE && "state stack overflow");
     StateStack.top++;
     StateStack.stack[StateStack.top] = state;
+    state->enter(context);
 }
 
 void StateStack_Pop(void) {
