@@ -1,0 +1,5 @@
+PointerAlignment: Left
+BasedOnStyle: Google
+BinPackArguments: false
+BinPackParameters: false
+ColumnLimit: 0
