@@ -61,27 +61,27 @@ static struct {
 } cursor = {GRID_ROWS / 2, GRID_COLUMNS / 2};
 
 static void FillGrid(void) {
-  for (int i = initial_row; i < GRID_ROWS; i++) {
-    for (int j = 0; j < GRID_COLUMNS; j++) {
-      if (i == initial_row) {
-        gem_grid[i][j] = RandomGem(true);
+  for (int row = initial_row; row < GRID_ROWS; row++) {
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+      if (row == initial_row) {
+        gem_grid[row][col] = RandomGem(true);
         continue;
       }
 
-      const Gem above = gem_grid[i - 1][j];
+      const Gem above = gem_grid[row - 1][col];
       if (above == GEM_EMPTY) {
-        gem_grid[i][j] = RandomGem(true);  // Can be any Gem
+        gem_grid[row][col] = RandomGem(true);  // Can be any Gem
       } else {
-        gem_grid[i][j] = RandomGem(false);  // Cannot be empty
+        gem_grid[row][col] = RandomGem(false);  // Cannot be empty
       }
     }
   }
 }
 
 static void ClearGrid(void) {
-  for (int i = 0; i < GRID_ROWS; i++) {
-    for (int j = 0; j < GRID_COLUMNS; j++) {
-      gem_grid[i][j] = GEM_EMPTY;
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+      gem_grid[row][col] = GEM_EMPTY;
     }
   }
 }
@@ -102,15 +102,15 @@ Rectangle RenderGridBox(void) {
 }
 
 void RenderGridGems(const Rectangle* grid_rect) {
-  for (int i = 0; i < GRID_ROWS; i++) {
-    for (int j = 0; j < GRID_COLUMNS; j++) {
-      const Gem gem = gem_grid[i][j];
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+      const Gem gem = gem_grid[row][col];
       if (gem == GEM_EMPTY) {
         continue;
       }
 
-      DrawRectangle(grid_rect->x + (TILE_SIZE * j) + GRID_LINE,
-                    grid_rect->y + (TILE_SIZE * i) + GRID_LINE,
+      DrawRectangle(grid_rect->x + (TILE_SIZE * col) + GRID_LINE,
+                    grid_rect->y + (TILE_SIZE * row) + GRID_LINE,
                     TILE_SIZE,
                     TILE_SIZE,
                     GemToColor(gem));
@@ -169,51 +169,51 @@ void CheckMatches(void) {
   bool marked[GRID_ROWS][GRID_COLUMNS] = {false};
 
   // --- Horizontal ---
-  for (int i = 0; i < GRID_ROWS; i++) {
-    for (int j = 0; j < GRID_COLUMNS - 2; j++) {
-      Gem current = gem_grid[i][j];
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int col = 0; col < GRID_COLUMNS - 2; col++) {
+      Gem current = gem_grid[row][col];
       if (current == GEM_EMPTY) continue;
 
-      if (gem_grid[i][j + 1] == current && gem_grid[i][j + 2] == current) {
-        marked[i][j] = true;
-        marked[i][j + 1] = true;
-        marked[i][j + 2] = true;
+      if (gem_grid[row][col + 1] == current && gem_grid[row][col + 2] == current) {
+        marked[row][col] = true;
+        marked[row][col + 1] = true;
+        marked[row][col + 2] = true;
       }
     }
   }
 
   // --- Vertical ---
-  for (int i = 0; i < GRID_ROWS - 2; i++) {
-    for (int j = 0; j < GRID_COLUMNS; j++) {
-      Gem current = gem_grid[i][j];
+  for (int row = 0; row < GRID_ROWS - 2; row++) {
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+      Gem current = gem_grid[row][col];
       if (current == GEM_EMPTY) continue;
 
-      if (gem_grid[i + 1][j] == current && gem_grid[i + 2][j] == current) {
-        marked[i][j] = true;
-        marked[i + 1][j] = true;
-        marked[i + 2][j] = true;
+      if (gem_grid[row + 1][col] == current && gem_grid[row + 2][col] == current) {
+        marked[row][col] = true;
+        marked[row + 1][col] = true;
+        marked[row + 2][col] = true;
       }
     }
   }
 
   // --- Remove ---
-  for (int i = 0; i < GRID_ROWS; i++) {
-    for (int j = 0; j < GRID_COLUMNS; j++) {
-      if (marked[i][j]) {
-        gem_grid[i][j] = GEM_EMPTY;
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+      if (marked[row][col]) {
+        gem_grid[row][col] = GEM_EMPTY;
       }
     }
   }
 }
 
 void ApplyGravity(void) {
-  for (int j = 0; j < GRID_COLUMNS; j++) {
-    for (int i = GRID_ROWS - 1; i >= 0; i--) {
-      if (gem_grid[i][j] == GEM_EMPTY) {
-        for (int k = i - 1; k >= 0; k--) {
-          if (gem_grid[k][j] != GEM_EMPTY) {
-            gem_grid[i][j] = gem_grid[k][j];
-            gem_grid[k][j] = GEM_EMPTY;
+  for (int col = 0; col < GRID_COLUMNS; col++) {
+    for (int row = GRID_ROWS - 1; row >= 0; row--) {
+      if (gem_grid[row][col] == GEM_EMPTY) {
+        for (int below = row - 1; below >= 0; below--) {
+          if (gem_grid[below][col] != GEM_EMPTY) {
+            gem_grid[row][col] = gem_grid[below][col];
+            gem_grid[below][col] = GEM_EMPTY;
             break;
           }
         }
@@ -228,22 +228,22 @@ void GenerateGems(const float dt) {
     return;
   }
 
-  for (int i = 0; i < GRID_ROWS - 1; i++) {
-    for (int j = 0; j < GRID_COLUMNS; j++) {
-      gem_grid[i][j] = gem_grid[i + 1][j];
+  for (int row = 0; row < GRID_ROWS - 1; row++) {
+    for (int col = 0; col < GRID_COLUMNS; col++) {
+      gem_grid[row][col] = gem_grid[row + 1][col];
     }
   }
 
-  for (int j = 0; j < GRID_COLUMNS; j++) {
-    gem_grid[GRID_ROWS - 1][j] = RandomGem(false);
+  for (int col = 0; col < GRID_COLUMNS; col++) {
+    gem_grid[GRID_ROWS - 1][col] = RandomGem(false);
   }
 
   row_spawn_timer = ROW_SPAWN_INTERVAL;
 }
 
 bool CheckGameOver(void) {
-  for (int i = 0; i < GRID_COLUMNS; i++) {
-    if (gem_grid[0][i] != GEM_EMPTY) {
+  for (int col = 0; col < GRID_COLUMNS; col++) {
+    if (gem_grid[0][col] != GEM_EMPTY) {
       return true;
     }
   }
