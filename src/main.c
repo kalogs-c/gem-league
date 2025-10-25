@@ -1,11 +1,11 @@
-#include "raylib.h"
-#include "settings.h"
-#include "state_main_menu.h"
-#include "state_match.h"
-#include "state_stack.h"
 #include <__stddef_null.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include "raylib.h"
+#include "settings.h"
+#include "state_main_menu.h"
+#include "state_stack.h"
 
 int main(void) {
   srand(time(NULL));
@@ -15,8 +15,7 @@ int main(void) {
   LoadSettings();
   ApplySettings();
 
-  // StateStack_Push(&MainMenuState, NULL);
-  StateStack_Push(&MatchState, NULL);
+  StateStack_Push(&MainMenuState, NULL);
 
   while (!WindowShouldClose()) {
     const float dt = GetFrameTime();

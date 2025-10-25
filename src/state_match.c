@@ -5,15 +5,21 @@
 #include <stdlib.h>
 
 #include "input_handler.h"
+#include "state_main_menu.h"
+#include "state_stack.h"
 
 #define GRID_COLUMNS 6
 #define GRID_ROWS 12
 
+static const int initial_row = GRID_ROWS / 2;
 static const int CURSOR_LINE = 3;
 static const int GRID_LINE = 5;
 static const int TILE_SIZE = 50;
 static const int GRID_WIDTH = TILE_SIZE * GRID_COLUMNS;
 static const int GRID_HEIGHT = TILE_SIZE * GRID_ROWS;
+static const float ROW_SPAWN_INTERVAL = 3.0f;
+
+static float row_spawn_timer = ROW_SPAWN_INTERVAL;
 
 typedef enum {
   GEM_EMPTY,
@@ -23,6 +29,14 @@ typedef enum {
   GEM_ROCK,
   GEM_COUNT,
 } Gem;
+
+static Gem RandomGem(const bool allow_empty) {
+  if (allow_empty) {
+    return rand() % GEM_COUNT;
+  } else {
+    return 1 + rand() % (GEM_COUNT - 1);
+  }
+}
 
 static Color GemToColor(const Gem gem) {
   switch (gem) {
@@ -46,22 +60,28 @@ static struct {
   int column;
 } cursor = {GRID_ROWS / 2, GRID_COLUMNS / 2};
 
-static void FillGrid() {
-  const int initial_row = GRID_ROWS / 2;
-
+static void FillGrid(void) {
   for (int i = initial_row; i < GRID_ROWS; i++) {
     for (int j = 0; j < GRID_COLUMNS; j++) {
       if (i == initial_row) {
-        gem_grid[i][j] = rand() % GEM_COUNT;
+        gem_grid[i][j] = RandomGem(true);
         continue;
       }
 
       const Gem above = gem_grid[i - 1][j];
       if (above == GEM_EMPTY) {
-        gem_grid[i][j] = rand() % GEM_COUNT;  // Can be any Gem
+        gem_grid[i][j] = RandomGem(true);  // Can be any Gem
       } else {
-        gem_grid[i][j] = 1 + rand() % (GEM_COUNT - 1);  // Cannot be empty
+        gem_grid[i][j] = RandomGem(false);  // Cannot be empty
       }
+    }
+  }
+}
+
+static void ClearGrid(void) {
+  for (int i = 0; i < GRID_ROWS; i++) {
+    for (int j = 0; j < GRID_COLUMNS; j++) {
+      gem_grid[i][j] = GEM_EMPTY;
     }
   }
 }
@@ -202,15 +222,51 @@ void ApplyGravity(void) {
   }
 }
 
+void GenerateGems(const float dt) {
+  row_spawn_timer -= dt;
+  if (row_spawn_timer > 0) {
+    return;
+  }
+
+  for (int i = 0; i < GRID_ROWS - 1; i++) {
+    for (int j = 0; j < GRID_COLUMNS; j++) {
+      gem_grid[i][j] = gem_grid[i + 1][j];
+    }
+  }
+
+  for (int j = 0; j < GRID_COLUMNS; j++) {
+    gem_grid[GRID_ROWS - 1][j] = RandomGem(false);
+  }
+
+  row_spawn_timer = ROW_SPAWN_INTERVAL;
+}
+
+bool CheckGameOver(void) {
+  for (int i = 0; i < GRID_COLUMNS; i++) {
+    if (gem_grid[0][i] != GEM_EMPTY) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void match_enter(void* _) {
+  row_spawn_timer = ROW_SPAWN_INTERVAL;
   FillGrid();
 };
 
-void match_update(const float _) {
+void match_update(const float dt) {
   CheckMatches();
   ApplyGravity();
   MoveCursor();
   SwapGems();
+  GenerateGems(dt);
+
+  if (CheckGameOver()) {
+    StateStack_Pop();
+    StateStack_Push(&MainMenuState, NULL);
+  };
 };
 
 void match_render(void) {
@@ -220,7 +276,9 @@ void match_render(void) {
   RenderCursor(&grid_rect);
 };
 
-void match_exit(void) {};
+void match_exit(void) {
+  ClearGrid();
+};
 
 State MatchState = {
     .enter = match_enter,
